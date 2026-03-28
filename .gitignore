@@ -54,3 +54,7 @@ backend/cmd/server/webdist/
 .vercel
 .vercel
 .env*.local
+
+# Other
+.cursor
+TODO.md
