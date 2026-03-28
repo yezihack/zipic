@@ -1,39 +1,33 @@
 {
   "version": 2,
   "name": "zipic",
+  "public": true,
   "builds": [
     {
-      "src": "api/**/*.go",
+      "src": "api/index.go",
       "use": "@vercel/go"
-    },
-    {
-      "src": "web/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "../backend/cmd/server/webdist"
-      }
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/$1"
+      "dest": "/api/index.go"
     },
     {
       "src": "/health",
-      "dest": "/api/health"
+      "dest": "/api/index.go"
     },
     {
       "src": "/assets/(.*)",
-      "dest": "/assets/$1"
+      "dest": "/api/index.go"
     },
     {
       "src": "/favicon.svg",
-      "dest": "/favicon.svg"
+      "dest": "/api/index.go"
     },
     {
       "src": "/(.*)",
-      "dest": "/index.html"
+      "dest": "/api/index.go"
     }
   ]
 }
