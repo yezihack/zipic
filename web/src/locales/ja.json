@@ -1,0 +1,51 @@
+{
+  "app": {
+    "title": "Zipic",
+    "subtitle": "高速で効率的な画像圧縮ツール"
+  },
+  "upload": {
+    "title": "画像をドラッグ＆ドロップまたはクリックしてアップロード",
+    "hint": "JPG、PNG、WebP対応 - 1ファイル最大20MB",
+    "invalidFormat": "無効な形式（JPG、PNG、WebPのみ対応）",
+    "fileTooLarge": "ファイルが大きすぎます（最大20MB）",
+    "maxFilesReached": "あと{count}ファイルのみ追加可能"
+  },
+  "settings": {
+    "title": "圧縮設定",
+    "qualityHigh": "高品質 (90%)",
+    "qualityMedium": "中品質 (75%)",
+    "qualityLow": "低品質 (60%)",
+    "qualityCustom": "カスタム：",
+    "compress": "圧縮",
+    "batchCompress": "一括圧縮",
+    "files": "ファイル",
+    "clearAll": "すべてクリア",
+    "autoDownload": "完了後自動ダウンロード"
+  },
+  "results": {
+    "title": "圧縮結果",
+    "dimensions": "サイズ：",
+    "originalSize": "元のサイズ：",
+    "compressedSize": "圧縮後サイズ：",
+    "compressionRatio": "圧縮率：",
+    "download": "ダウンロード",
+    "downloadAllZip": "ZIPで一括ダウンロード（{count}ファイル）"
+  },
+  "history": {
+    "title": "圧縮履歴",
+    "clearAll": "履歴をクリア",
+    "note": "履歴はブラウザにローカル保存（最大100件、サーバー保持1日）",
+    "files": "ファイル",
+    "downloadZip": "ZIPで一括ダウンロード"
+  },
+  "messages": {
+    "success": "{success}/{total}枚の画像を正常に圧縮しました"
+  },
+  "footer": "Zipic {year} - 無料オンライン画像圧縮ツール",
+  "lang": {
+    "switch": "言語",
+    "zh": "中文",
+    "en": "English",
+    "ja": "日本語"
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "app": {
+    "title": "Zipic",
+    "subtitle": "快速高效的图片压缩工具"
+  },
+  "upload": {
+    "title": "拖拽图片到此处或点击上传",
+    "hint": "支持 JPG、PNG、WebP 格式 - 单文件最大 20MB",
+    "invalidFormat": "格式无效（仅支持 JPG、PNG、WebP）",
+    "fileTooLarge": "文件过大（最大 20MB）",
+    "maxFilesReached": "最多只能再添加 {count} 个文件"
+  },
+  "settings": {
+    "title": "压缩设置",
+    "qualityHigh": "高质量 (90%)",
+    "qualityMedium": "中等 (75%)",
+    "qualityLow": "低质量 (60%)",
+    "qualityCustom": "自定义：",
+    "compress": "压缩",
+    "batchCompress": "批量压缩",
+    "files": "个文件",
+    "clearAll": "清空全部",
+    "autoDownload": "完成后自动下载"
+  },
+  "results": {
+    "title": "压缩结果",
+    "dimensions": "尺寸：",
+    "originalSize": "原始大小：",
+    "compressedSize": "压缩后大小：",
+    "compressionRatio": "压缩比：",
+    "download": "下载",
+    "downloadAllZip": "打包下载 ZIP（{count} 个文件）"
+  },
+  "history": {
+    "title": "压缩历史",
+    "clearAll": "清空历史",
+    "note": "历史记录保存在浏览器本地（最多100条，服务器保留1天）",
+    "files": "个文件",
+    "downloadZip": "打包下载 ZIP"
+  },
+  "messages": {
+    "success": "成功压缩 {success}/{total} 张图片"
+  },
+  "footer": "Zipic {year} - 免费在线图片压缩工具",
+  "lang": {
+    "switch": "语言",
+    "zh": "中文",
+    "en": "English",
+    "ja": "日本語"
+  }
+}

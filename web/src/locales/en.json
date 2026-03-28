@@ -1,0 +1,51 @@
+{
+  "app": {
+    "title": "Zipic",
+    "subtitle": "Fast and efficient image compression tool"
+  },
+  "upload": {
+    "title": "Drag and drop images here or click to upload",
+    "hint": "Supports JPG, PNG, WebP - Max 20MB per file",
+    "invalidFormat": "Invalid format (only JPG, PNG, WebP allowed)",
+    "fileTooLarge": "File too large (max 20MB)",
+    "maxFilesReached": "Only {count} more files can be added"
+  },
+  "settings": {
+    "title": "Compression Settings",
+    "qualityHigh": "High (90%)",
+    "qualityMedium": "Medium (75%)",
+    "qualityLow": "Low (60%)",
+    "qualityCustom": "Custom: ",
+    "compress": "Compress",
+    "batchCompress": "Batch Compress",
+    "files": "files",
+    "clearAll": "Clear All",
+    "autoDownload": "Auto download after completion"
+  },
+  "results": {
+    "title": "Compression Results",
+    "dimensions": "Dimensions:",
+    "originalSize": "Original Size:",
+    "compressedSize": "Compressed Size:",
+    "compressionRatio": "Compression Ratio:",
+    "download": "Download",
+    "downloadAllZip": "Download All as ZIP ({count} files)"
+  },
+  "history": {
+    "title": "Compression History",
+    "clearAll": "Clear All",
+    "note": "History is stored locally in your browser (max 100 records, 1 day retention on server)",
+    "files": "files",
+    "downloadZip": "Download All as ZIP"
+  },
+  "messages": {
+    "success": "Successfully compressed {success}/{total} images"
+  },
+  "footer": "Zipic {year} - Free online image compression tool",
+  "lang": {
+    "switch": "Language",
+    "zh": "中文",
+    "en": "English",
+    "ja": "日本語"
+  }
+}

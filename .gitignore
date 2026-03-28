@@ -1,0 +1,56 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+
+# Go
+*.test
+*.out
+go.work
+vendor/
+
+# Node
+node_modules/
+.pnpm-store/
+dist/
+*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Uploads
+uploads/
+backend/uploads/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build output
+backend/bin/
+backend/cmd/server/webdist/
+
+# Cache
+.cache/
+*.cache
+
+# Vercel
+.vercel
+.vercel
+.env*.local
