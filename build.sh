@@ -27,11 +27,11 @@ fi
 
 # Get version info
 VERSION="${VERSION:-v1.0.0}"
-BUILD_DATE=$(date +"%Y-%m-%d %H:%M:%S")
+BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 GIT_COMMIT="unknown"
 
 if command -v git &> /dev/null; then
-    GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+    GIT_COMMIT=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
     VERSION=$(git describe --tags --always 2>/dev/null || echo "v1.0.0")
 fi
 
@@ -39,7 +39,8 @@ OUTPUT_DIR="bin"
 mkdir -p "$OUTPUT_DIR"
 OUTPUT="$OUTPUT_DIR/zipic"
 
-go build -trimpath -ldflags="-s -w -X 'main.Version=$VERSION' -X 'main.BuildDate=$BUILD_DATE' -X 'main.GitCommit=$GIT_COMMIT'" -o "$OUTPUT" ./cmd/server
+LDFLAGS="-s -w -X 'zipic/internal/version.Version=$VERSION' -X 'zipic/internal/version.BuildDate=$BUILD_DATE' -X 'zipic/internal/version.GitCommit=$GIT_COMMIT'"
+go build -trimpath -ldflags="$LDFLAGS" -o "$OUTPUT" ./cmd/server
 
 echo -e "\n\033[32mBuild completed successfully!\033[0m"
 echo -e "\033[36mOutput: backend/$OUTPUT\033[0m"

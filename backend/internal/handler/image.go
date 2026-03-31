@@ -42,9 +42,23 @@ var (
 // NewImageHandler creates a new ImageHandler
 func NewImageHandler() *ImageHandler {
 	uploadDir := "./uploads"
-	os.MkdirAll(uploadDir, 0755)
-	os.MkdirAll(filepath.Join(uploadDir, "compressed"), 0755)
+	os.MkdirAll(uploadDir, 0700) // Only current user can access
+	os.MkdirAll(filepath.Join(uploadDir, "compressed"), 0700)
 	return &ImageHandler{uploadDir: uploadDir}
+}
+
+// UploadDir returns the upload directory path
+func (h *ImageHandler) UploadDir() string {
+	return h.uploadDir
+}
+
+// StartCleanupScheduler starts the periodic file cleanup task
+func StartCleanupScheduler(uploadDir string) {
+	ticker := time.NewTicker(1 * time.Hour)
+	defer ticker.Stop()
+	for range ticker.C {
+		CleanupOldFiles(uploadDir)
+	}
 }
 
 // ImageInfo represents image information
@@ -81,12 +95,39 @@ func (h *ImageHandler) Upload(c *gin.Context) {
 		return
 	}
 
+	// Read content with size limit
+	content, err := io.ReadAll(io.LimitReader(file, MaxFileSize+1))
+	if err != nil {
+		response.InternalError(c, "Failed to read file")
+		return
+	}
+
+	// Check file size
+	if len(content) > MaxFileSize {
+		response.BadRequest(c, "File too large (max 20MB)")
+		return
+	}
+
+	// Check image dimensions (prevent decompression bomb)
+	config, _, err := image.DecodeConfig(bytes.NewReader(content))
+	if err != nil {
+		response.BadRequest(c, "Invalid or unsupported image format")
+		return
+	}
+
+	// Check total pixels
+	totalPixels := config.Width * config.Height
+	if totalPixels > MaxImagePixels {
+		response.BadRequest(c, "Image dimensions too large (max 10000x10000)")
+		return
+	}
+
 	// Generate unique filename
 	filename := fmt.Sprintf("%d_%s", time.Now().UnixNano(), sanitizeFilename(header.Filename))
 	originalPath := filepath.Join(h.uploadDir, filename)
 
-	// Save original file
-	if err := saveFile(file, originalPath); err != nil {
+	// Save original file with restricted permissions
+	if err := os.WriteFile(originalPath, content, 0600); err != nil {
 		response.InternalError(c, "Failed to save file")
 		return
 	}
@@ -125,24 +166,44 @@ func (h *ImageHandler) Compress(c *gin.Context) {
 		return
 	}
 
-	// Read file content
-	content, err := io.ReadAll(file)
+	// Read file content with size limit
+	content, err := io.ReadAll(io.LimitReader(file, MaxFileSize+1))
 	if err != nil {
 		response.InternalError(c, "Failed to read file")
+		return
+	}
+
+	// Check file size
+	if len(content) > MaxFileSize {
+		response.BadRequest(c, "File too large (max 20MB)")
+		return
+	}
+
+	// Check image dimensions before decoding (prevent decompression bomb)
+	config, _, err := image.DecodeConfig(bytes.NewReader(content))
+	if err != nil {
+		response.BadRequest(c, "Invalid or unsupported image format")
+		return
+	}
+
+	// Check total pixels
+	totalPixels := config.Width * config.Height
+	if totalPixels > MaxImagePixels {
+		response.BadRequest(c, "Image dimensions too large (max 10000x10000)")
 		return
 	}
 
 	// Decode image
 	img, format, err := decodeImage(bytes.NewReader(content))
 	if err != nil {
-		response.BadRequest(c, "Failed to decode image: "+err.Error())
+		response.BadRequest(c, "Invalid or unsupported image format")
 		return
 	}
 
 	// Compress image
 	compressed, err := compressImage(img, format, quality)
 	if err != nil {
-		response.InternalError(c, "Failed to compress image: "+err.Error())
+		response.InternalError(c, "Failed to compress image")
 		return
 	}
 
@@ -151,16 +212,16 @@ func (h *ImageHandler) Compress(c *gin.Context) {
 	originalFilename := fmt.Sprintf("%d_%s", timestamp, sanitizeFilename(header.Filename))
 	compressedFilename := fmt.Sprintf("%d_compressed_%s", timestamp, sanitizeFilename(header.Filename))
 
-	// Save original
+	// Save original with restricted permissions
 	originalPath := filepath.Join(h.uploadDir, originalFilename)
-	if err := os.WriteFile(originalPath, content, 0644); err != nil {
+	if err := os.WriteFile(originalPath, content, 0600); err != nil {
 		response.InternalError(c, "Failed to save original file")
 		return
 	}
 
-	// Save compressed
+	// Save compressed with restricted permissions
 	compressedPath := filepath.Join(h.uploadDir, "compressed", compressedFilename)
-	if err := os.WriteFile(compressedPath, compressed, 0644); err != nil {
+	if err := os.WriteFile(compressedPath, compressed, 0600); err != nil {
 		os.Remove(originalPath)
 		response.InternalError(c, "Failed to save compressed file")
 		return
@@ -194,6 +255,12 @@ func (h *ImageHandler) BatchCompress(c *gin.Context) {
 		return
 	}
 
+	// Check file count limit
+	if len(files) > MaxBatchFiles {
+		response.BadRequest(c, fmt.Sprintf("Too many files (max %d allowed)", MaxBatchFiles))
+		return
+	}
+
 	// Get quality parameter
 	qualityStr := c.DefaultPostForm("quality", "80")
 	quality, err := strconv.Atoi(qualityStr)
@@ -217,10 +284,27 @@ func (h *ImageHandler) BatchCompress(c *gin.Context) {
 			continue
 		}
 
-		// Read content
-		content, err := io.ReadAll(file)
+		// Read content with size limit
+		content, err := io.ReadAll(io.LimitReader(file, MaxFileSize+1))
 		file.Close()
 		if err != nil {
+			continue
+		}
+
+		// Check file size
+		if len(content) > MaxFileSize {
+			continue
+		}
+
+		// Check image dimensions before decoding (prevent decompression bomb)
+		config, _, err := image.DecodeConfig(bytes.NewReader(content))
+		if err != nil {
+			continue
+		}
+
+		// Check total pixels
+		totalPixels := config.Width * config.Height
+		if totalPixels > MaxImagePixels {
 			continue
 		}
 
@@ -241,13 +325,13 @@ func (h *ImageHandler) BatchCompress(c *gin.Context) {
 		originalFilename := fmt.Sprintf("%d_%s", timestamp, sanitizeFilename(fileHeader.Filename))
 		compressedFilename := fmt.Sprintf("%d_compressed_%s", timestamp, sanitizeFilename(fileHeader.Filename))
 
-		// Save original
+		// Save original with restricted permissions
 		originalPath := filepath.Join(h.uploadDir, originalFilename)
-		os.WriteFile(originalPath, content, 0644)
+		os.WriteFile(originalPath, content, 0600)
 
-		// Save compressed
+		// Save compressed with restricted permissions
 		compressedPath := filepath.Join(h.uploadDir, "compressed", compressedFilename)
-		os.WriteFile(compressedPath, compressed, 0644)
+		os.WriteFile(compressedPath, compressed, 0600)
 
 		compressedFiles = append(compressedFiles, compressedFilename)
 
@@ -263,6 +347,10 @@ func (h *ImageHandler) BatchCompress(c *gin.Context) {
 		}
 
 		results = append(results, result)
+
+		// Release memory immediately
+		content = nil
+		compressed = nil
 	}
 
 	// Generate batch ID for ZIP download if more than 1 file
@@ -332,6 +420,17 @@ func (h *ImageHandler) Preview(c *gin.Context) {
 		c.Status(http.StatusNotFound)
 		return
 	}
+
+	// Set proper Content-Type based on extension
+	ext := strings.ToLower(filepath.Ext(filePath))
+	contentType := "image/jpeg"
+	if ext == ".png" {
+		contentType = "image/png"
+	} else if ext == ".webp" {
+		contentType = "image/webp"
+	}
+	c.Header("Content-Type", contentType)
+	c.Header("X-Content-Type-Options", "nosniff") // Prevent MIME sniffing
 
 	c.File(filePath)
 }

@@ -8,7 +8,8 @@ import (
 //go:embed webdist
 var webdist embed.FS
 
-// WebdistFS returns the embedded webdist filesystem
-func WebdistFS() (fs.FS, error) {
+// EmbeddedWebdist returns the embedded webdist filesystem
+// This is called by the cmd package to serve frontend
+func EmbeddedWebdist() (fs.FS, error) {
 	return fs.Sub(webdist, "webdist")
 }

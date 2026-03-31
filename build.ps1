@@ -114,12 +114,18 @@ if ($BuildBackend) {
 
     # Get version from git tag or use default
     $Version = "v1.0.0"
-    $BuildDate = (Get-Date -Format "yyyy-MM-dd HH:mm:ss")
+    $BuildDate = (Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
     $GitCommit = "unknown"
 
     try {
-        $GitCommit = git rev-parse --short HEAD 2>$null
-        $Version = git describe --tags --always 2>$null
+        $GitCommit = git rev-parse HEAD 2>$null
+        if ($GitCommit) {
+            $GitCommit = $GitCommit.Trim()
+        }
+        $TagVersion = git describe --tags --always 2>$null
+        if ($TagVersion) {
+            $Version = $TagVersion.Trim()
+        }
     } catch {}
 
     $OutputDir = "bin"
@@ -141,7 +147,8 @@ if ($BuildBackend) {
     $Env:GOOS = $GoOs
     $Env:GOARCH = $GoArch
 
-    go build -trimpath -ldflags="-s -w -X 'main.Version=$Version' -X 'main.BuildDate=$BuildDate' -X 'main.GitCommit=$GitCommit'" -o $Output ./cmd/server
+    $LdFlags = "-s -w -X 'zipic/internal/version.Version=$Version' -X 'zipic/internal/version.BuildDate=$BuildDate' -X 'zipic/internal/version.GitCommit=$GitCommit'"
+    go build -trimpath -ldflags="$LdFlags" -o $Output ./cmd/server
 
     # Clear env vars
     $Env:GOOS = ""
