@@ -135,32 +135,11 @@
         <h2>{{ t('results.title') }}</h2>
         <div class="results-grid">
           <div v-for="(result, index) in results" :key="index" class="result-card">
-            <!-- Image Comparison -->
-            <div class="comparison-container">
-              <div class="comparison-item">
-                <span class="comparison-label">Original</span>
-                <el-image
-                  :src="getPreviewUrl(result.original.filename)"
-                  alt="Original"
-                  fit="cover"
-                  :preview-src-list="[getPreviewUrl(result.original.filename), getPreviewUrl(result.compressed.filename)]"
-                  :initial-index="0"
-                  class="comparison-image"
-                />
-              </div>
-              <div class="comparison-arrow">
-                <el-icon :size="24"><Right /></el-icon>
-              </div>
-              <div class="comparison-item">
-                <span class="comparison-label">Compressed</span>
-                <el-image
-                  :src="getPreviewUrl(result.compressed.filename)"
-                  alt="Compressed"
-                  fit="cover"
-                  :preview-src-list="[getPreviewUrl(result.original.filename), getPreviewUrl(result.compressed.filename)]"
-                  :initial-index="1"
-                  class="comparison-image"
-                />
+            <!-- Clickable Thumbnail to open comparison modal -->
+            <div class="comparison-thumbnail" @click="openCompareModal(result)">
+              <img :src="getPreviewUrl(result.compressed.filename)" alt="Preview" />
+              <div class="thumbnail-overlay">
+                <span class="overlay-text">{{ t('results.clickToCompare') }}</span>
               </div>
             </div>
 
@@ -226,19 +205,24 @@
             </div>
             <div class="history-results">
               <div v-for="(result, ridx) in item.results" :key="ridx" class="history-result-mini">
+                <img
+                  v-if="result.thumbnail"
+                  :src="result.thumbnail"
+                  alt="Thumbnail"
+                  class="history-image"
+                />
                 <el-image
-                  :src="getPreviewUrl(result.compressed.filename)"
+                  v-else
+                  :src="getPreviewUrl(result.compressedFilename)"
                   alt="Compressed"
                   fit="cover"
-                  :preview-src-list="item.results.map(r => getPreviewUrl(r.compressed.filename))"
-                  :initial-index="ridx"
                   class="history-image"
                 />
                 <div class="mini-info">
-                  <span>{{ formatSize(result.compressed.size) }}</span>
-                  <span class="ratio">{{ result.compression_ratio.toFixed(1) }}%</span>
+                  <span>{{ formatSize(result.compressedSize) }}</span>
+                  <span class="ratio">{{ getCompressionRatio(result).toFixed(1) }}%</span>
                 </div>
-                <el-button type="success" size="small" @click="downloadFile(result.compressed.filename)">
+                <el-button type="success" size="small" @click="downloadFile(result.compressedFilename)">
                   <el-icon><Download /></el-icon>
                 </el-button>
               </div>
@@ -257,23 +241,55 @@
     <footer class="footer">
       <p>{{ t('footer', { year: copyrightYear }) }}</p>
     </footer>
+
+    <!-- Full-screen Comparison Modal -->
+    <div v-if="compareModalVisible" class="compare-modal" @click.self="closeCompareModal">
+      <div class="compare-modal-content">
+        <button class="compare-modal-close" @click="closeCompareModal">
+          <el-icon :size="24"><Close /></el-icon>
+        </button>
+        <ImageCompare
+          v-if="compareResult"
+          :before-src="getPreviewUrl(compareResult.original.filename)"
+          :after-src="getPreviewUrl(compareResult.compressed.filename)"
+          :before-label="t('results.original')"
+          :after-label="t('results.compressed')"
+          class="compare-modal-slider"
+        />
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Upload, Close, Right, Download, Clock, ArrowDown } from '@element-plus/icons-vue'
+import { Upload, Close, Download, Clock, ArrowDown } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { compressImage, batchCompressImages, getDownloadUrl, getPreviewUrl, getDownloadZipUrl } from './api'
 import type { CompressedResult } from './api'
 import { setLocale, getLocale } from './i18n'
 import type { LocaleType } from './i18n'
+import ImageCompare from './components/ImageCompare.vue'
 
 const { t } = useI18n()
 
+interface HistoryResult {
+  compressedFilename: string
+  originalFilename: string
+  compressedSize: number
+  compressionRatio: number
+  compression_ratio?: number  // legacy field for backward compatibility
+  thumbnail: string  // base64 thumbnail (small size)
+}
+
+// Helper for backward compatibility with legacy history data
+function getCompressionRatio(result: HistoryResult): number {
+  return result.compressionRatio ?? result.compression_ratio ?? 0
+}
+
 interface HistoryItem {
-  results: CompressedResult[]
+  results: HistoryResult[]
   batchId: string
   timestamp: number
 }
@@ -288,6 +304,10 @@ const results = ref<CompressedResult[]>([])
 const batchId = ref('')
 const history = ref<HistoryItem[]>([])
 const currentLang = ref<LocaleType>(getLocale())
+
+// Comparison modal state
+const compareModalVisible = ref(false)
+const compareResult = ref<CompressedResult | null>(null)
 
 const isBatchMode = computed(() => pendingFiles.value.length > 1)
 
@@ -415,6 +435,39 @@ function formatSize(bytes: number): string {
   return (bytes / (1024 * 1024)).toFixed(2) + ' MB'
 }
 
+async function generateThumbnail(url: string): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      const thumbSize = 100  // thumbnail size
+      const scale = Math.min(thumbSize / img.width, thumbSize / img.height)
+      canvas.width = img.width * scale
+      canvas.height = img.height * scale
+      const ctx = canvas.getContext('2d')
+      if (ctx) {
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+        resolve(canvas.toDataURL('image/jpeg', 0.7))
+      } else {
+        resolve('')
+      }
+    }
+    img.onerror = () => resolve('')
+    img.src = url
+  })
+}
+
+function openCompareModal(result: CompressedResult): void {
+  compareResult.value = result
+  compareModalVisible.value = true
+}
+
+function closeCompareModal(): void {
+  compareModalVisible.value = false
+  compareResult.value = null
+}
+
 async function startCompression(): Promise<void> {
   if (pendingFiles.value.length === 0) return
 
@@ -433,10 +486,24 @@ async function startCompression(): Promise<void> {
       ElMessage.success(t('messages.success', { success: response.data.success, total: response.data.total }))
     }
 
-    // Save to history
+    // Save to history with thumbnails
     if (results.value.length > 0) {
+      // Generate thumbnails for each result
+      const historyResults: HistoryResult[] = await Promise.all(
+        results.value.map(async (result) => {
+          const thumbnail = await generateThumbnail(getPreviewUrl(result.compressed.filename))
+          return {
+            compressedFilename: result.compressed.filename,
+            originalFilename: result.original.filename,
+            compressedSize: result.compressed.size,
+            compressionRatio: result.compression_ratio,
+            thumbnail
+          }
+        })
+      )
+
       const historyItem: HistoryItem = {
-        results: results.value,
+        results: historyResults,
         batchId: batchId.value,
         timestamp: Date.now()
       }
@@ -779,39 +846,97 @@ body {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
-.comparison-container {
-  display: flex;
-  align-items: center;
-  gap: 15px;
+.comparison-thumbnail {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
   margin-bottom: 20px;
 }
 
-.comparison-item {
-  flex: 1;
-  text-align: center;
-}
-
-.comparison-label {
-  display: block;
-  font-size: 12px;
-  color: #6b7280;
-  margin-bottom: 8px;
-  font-weight: 600;
-}
-
-.comparison-item img,
-.comparison-item .comparison-image {
+.comparison-thumbnail img {
   width: 100%;
-  height: 120px;
+  height: 100%;
   object-fit: cover;
-  border-radius: 8px;
-  border: 2px solid #e5e7eb;
-  cursor: pointer;
+  transition: transform 0.3s ease;
 }
 
-.comparison-arrow {
-  color: #10b981;
-  flex-shrink: 0;
+.comparison-thumbnail:hover img {
+  transform: scale(1.05);
+}
+
+.thumbnail-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.comparison-thumbnail:hover .thumbnail-overlay {
+  opacity: 1;
+}
+
+.overlay-text {
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 16px;
+  background: rgba(16, 185, 129, 0.9);
+  border-radius: 6px;
+}
+
+/* Comparison Modal */
+.compare-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.compare-modal-content {
+  position: relative;
+  width: 100%;
+  max-width: 1200px;
+  height: 80vh;
+  background: transparent;
+}
+
+.compare-modal-close {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.compare-modal-close:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.compare-modal-slider {
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
 }
 
 .result-stats {
@@ -1049,14 +1174,6 @@ body {
 
   .results-grid {
     grid-template-columns: 1fr;
-  }
-
-  .comparison-container {
-    flex-direction: column;
-  }
-
-  .comparison-arrow {
-    transform: rotate(90deg);
   }
 }
 

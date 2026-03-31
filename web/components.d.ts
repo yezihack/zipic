@@ -15,5 +15,6 @@ declare module 'vue' {
     ElIcon: typeof import('element-plus/es')['ElIcon']
     ElImage: typeof import('element-plus/es')['ElImage']
     ElSlider: typeof import('element-plus/es')['ElSlider']
+    ImageCompare: typeof import('./src/components/ImageCompare.vue')['default']
   }
 }

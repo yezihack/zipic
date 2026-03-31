@@ -24,6 +24,9 @@
   },
   "results": {
     "title": "Compression Results",
+    "original": "Original",
+    "compressed": "Compressed",
+    "clickToCompare": "Click to Compare",
     "dimensions": "Dimensions:",
     "originalSize": "Original Size:",
     "compressedSize": "Compressed Size:",

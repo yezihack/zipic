@@ -24,6 +24,9 @@
   },
   "results": {
     "title": "圧縮結果",
+    "original": "元画像",
+    "compressed": "圧縮後",
+    "clickToCompare": "クリックで比較",
     "dimensions": "サイズ：",
     "originalSize": "元のサイズ：",
     "compressedSize": "圧縮後サイズ：",

@@ -24,6 +24,9 @@
   },
   "results": {
     "title": "压缩结果",
+    "original": "原图",
+    "compressed": "压缩后",
+    "clickToCompare": "点击对比",
     "dimensions": "尺寸：",
     "originalSize": "原始大小：",
     "compressedSize": "压缩后大小：",
