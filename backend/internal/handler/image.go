@@ -18,7 +18,6 @@ import (
 
 	"zipic/pkg/response"
 
-	"github.com/disintegration/imaging"
 	"github.com/gin-gonic/gin"
 )
 
@@ -583,16 +582,9 @@ func decodeImage(r io.Reader) (image.Image, string, error) {
 func compressImage(img image.Image, format string, quality int) ([]byte, error) {
 	var buf bytes.Buffer
 
-	// Resize if too large (max 4096px)
-	bounds := img.Bounds()
-	maxDimension := 4096
-	if bounds.Dx() > maxDimension || bounds.Dy() > maxDimension {
-		if bounds.Dx() > bounds.Dy() {
-			img = imaging.Resize(img, maxDimension, 0, imaging.Lanczos)
-		} else {
-			img = imaging.Resize(img, 0, maxDimension, imaging.Lanczos)
-		}
-	}
+	// Note: We don't resize the image here to keep original dimensions
+	// This allows proper before/after comparison in the frontend
+	// File size reduction is achieved through JPEG quality compression
 
 	switch strings.ToLower(format) {
 	case "jpeg", "jpg":
