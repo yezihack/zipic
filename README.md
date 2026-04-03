@@ -10,6 +10,8 @@
 
 高速で効率的な画像圧縮ツール、一括処理とZIP ダウンロード対応。
 
+![20260403200959](https://cdn.jsdelivr.net/gh/yezihack/assets/b/20260403200959.png)
+
 ---
 
 ## [English](#english) | [中文](#中文) | [日本語](#日本語)
