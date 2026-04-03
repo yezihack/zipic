@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"image"
 	"image/jpeg"
+	_ "image/png" // Register PNG decoder
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -19,6 +20,7 @@ import (
 	"zipic/pkg/response"
 
 	"github.com/gin-gonic/gin"
+	_ "golang.org/x/image/webp" // Register WebP decoder
 )
 
 // ImageHandler handles image-related requests
@@ -528,7 +530,9 @@ func cleanupDir(dir string, cutoff time.Time) {
 // Helper functions
 
 func isValidImageType(contentType string) bool {
-	validTypes := []string{"image/jpeg", "image/png", "image/webp"}
+	// Normalize content type (some clients send "image/jpg" instead of "image/jpeg")
+	contentType = strings.ToLower(strings.TrimSpace(contentType))
+	validTypes := []string{"image/jpeg", "image/jpg", "image/png", "image/webp"}
 	for _, t := range validTypes {
 		if contentType == t {
 			return true

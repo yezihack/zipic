@@ -58,3 +58,6 @@ backend/cmd/server/webdist/
 # Other
 .cursor
 TODO.md
+.playwright-mcp
+test.png
+.claude

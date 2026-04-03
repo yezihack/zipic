@@ -1,4 +1,4 @@
-package main
+package handler
 
 import (
 	"archive/zip"
@@ -448,5 +448,3 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	router.ServeHTTP(w, r)
 }
-
-func main() {}
