@@ -76,7 +76,7 @@ type ImageInfo struct {
 type CompressedResult struct {
 	Original      ImageInfo `json:"original"`
 	Compressed    ImageInfo `json:"compressed"`
-	CompressionRatio float64 `json:"compression_ratio"`
+	CompressionRate float64 `json:"compression_rate"`
 	Quality       int       `json:"quality"`
 }
 
@@ -235,7 +235,7 @@ func (h *ImageHandler) Compress(c *gin.Context) {
 	result := CompressedResult{
 		Original:      originalInfo,
 		Compressed:    compressedInfo,
-		CompressionRatio: float64(len(compressed)) / float64(len(content)) * 100,
+		CompressionRate: (1 - float64(len(compressed)) / float64(len(content))) * 100,
 		Quality:       quality,
 	}
 
@@ -343,7 +343,7 @@ func (h *ImageHandler) BatchCompress(c *gin.Context) {
 		result := CompressedResult{
 			Original:      originalInfo,
 			Compressed:    compressedInfo,
-			CompressionRatio: float64(len(compressed)) / float64(len(content)) * 100,
+			CompressionRate: (1 - float64(len(compressed)) / float64(len(content))) * 100,
 			Quality:       quality,
 		}
 

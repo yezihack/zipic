@@ -30,7 +30,7 @@
     "dimensions": "Dimensions:",
     "originalSize": "Original Size:",
     "compressedSize": "Compressed Size:",
-    "compressionRatio": "Compression Ratio:",
+    "compressionRate": "Compression Rate:",
     "download": "Download",
     "downloadAllZip": "Download All as ZIP ({count} files)"
   },

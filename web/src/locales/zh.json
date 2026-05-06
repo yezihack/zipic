@@ -30,7 +30,7 @@
     "dimensions": "尺寸：",
     "originalSize": "原始大小：",
     "compressedSize": "压缩后大小：",
-    "compressionRatio": "压缩比：",
+    "compressionRate": "压缩率：",
     "download": "下载",
     "downloadAllZip": "打包下载 ZIP（{count} 个文件）"
   },

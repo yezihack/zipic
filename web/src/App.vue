@@ -158,9 +158,9 @@
                 <span class="stat-value compressed">{{ formatSize(result.compressed.size) }}</span>
               </div>
               <div class="stat-row">
-                <span class="stat-label">{{ t('results.compressionRatio') }}</span>
-                <span class="stat-value ratio" :class="{ good: result.compression_ratio < 70 }">
-                  {{ result.compression_ratio.toFixed(1) }}%
+                <span class="stat-label">{{ t('results.compressionRate') }}</span>
+                <span class="stat-value ratio" :class="{ good: result.compression_rate > 30 }">
+                  {{ result.compression_rate.toFixed(1) }}%
                 </span>
               </div>
             </div>
@@ -278,14 +278,14 @@ interface HistoryResult {
   compressedFilename: string
   originalFilename: string
   compressedSize: number
-  compressionRatio: number
-  compression_ratio?: number  // legacy field for backward compatibility
+  compressionRate: number
+  compression_rate?: number  // legacy field for backward compatibility
   thumbnail: string  // base64 thumbnail (small size)
 }
 
 // Helper for backward compatibility with legacy history data
 function getCompressionRatio(result: HistoryResult): number {
-  return result.compressionRatio ?? result.compression_ratio ?? 0
+  return result.compressionRate ?? result.compression_rate ?? 0
 }
 
 interface HistoryItem {
@@ -496,7 +496,7 @@ async function startCompression(): Promise<void> {
             compressedFilename: result.compressed.filename,
             originalFilename: result.original.filename,
             compressedSize: result.compressed.size,
-            compressionRatio: result.compression_ratio,
+            compressionRate: result.compression_rate,
             thumbnail
           }
         })

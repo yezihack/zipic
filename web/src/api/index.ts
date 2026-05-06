@@ -34,7 +34,7 @@ export interface ImageInfo {
 export interface CompressedResult {
   original: ImageInfo
   compressed: ImageInfo
-  compression_ratio: number
+  compression_rate: number
   quality: number
 }
 
